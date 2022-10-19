@@ -16,7 +16,8 @@ public class Sample {
 
 	public static void main(String... args) throws Exception {
 
-		System.out.println("classLoader: " + Sample.class.getClassLoader());
+		//(debug: ClassNotFoundException on Java11/17 if loaded by bootstrap classloader)
+		//System.out.println("classLoader: " + Sample.class.getClassLoader());
 
 		if(TimeChangerUtil.isChangingTime()) {
 			// offset by System property (-DTimeChangerAgent.OFFSETTIMEMILLIS)
