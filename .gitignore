@@ -28,6 +28,9 @@ hs_err_pid*
 # Ignore Gradle build output directory
 build
 
+#vim temporary
+*.swp
+
 # eclipse/Java
 bin/
 .project

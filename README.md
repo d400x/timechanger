@@ -43,5 +43,9 @@ TimeChangerUtil contains some utility methods:
 - getActualTimeMillis()
 - isChangingTime()
 
-Sample.java controls time-change using above utility methods.
+[Sample.java](src/main/java/ga/d400x/timechanger/sample/Sample.java) controls time-change using above utility methods.
+
+## Limitations
+- Timechanger cannot change essential Java classes loaded by Bootstrap classloader before executing Java agents' premain.
+- Need Java1.8 or above
 
