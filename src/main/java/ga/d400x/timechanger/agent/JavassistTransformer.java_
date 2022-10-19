@@ -1,0 +1,69 @@
+package ga.d400x.timechanger.agent;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.IllegalClassFormatException;
+import java.security.ProtectionDomain;
+
+import javassist.CannotCompileException;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.expr.ExprEditor;
+import javassist.expr.MethodCall;
+
+public class JavassistTransformer implements ClassFileTransformer {
+
+	@Override
+	public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
+			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+
+		if(TimeChangerAgent.isSkip(className)) {
+			// no need to transform
+			return null;
+		}
+
+		CtClass cc = null;
+		try (InputStream is = new ByteArrayInputStream(classfileBuffer))
+		{
+			cc = ClassPool.getDefault().makeClass(is);
+
+			CustomExprEditor exprEditor = new CustomExprEditor();
+			cc.instrument(exprEditor);
+
+			return exprEditor.isReplaced ? cc.toBytecode() : null;
+		} catch(Exception e) {
+			e.printStackTrace(System.err);
+			throw new RuntimeException(e);
+		} finally {
+			if(cc != null) {
+				cc.detach();
+			}
+		}
+	}
+
+	private static class CustomExprEditor extends ExprEditor {
+		boolean isReplaced;
+
+		@Override
+		public void edit(MethodCall m) throws CannotCompileException {
+			//-- debug: java.util.Date() not transformed (because of Logger#log)
+			//if(className.startsWith("java/util/Date")) {
+			//	AgentUtil.log(">  " + m.where().getLongName() + " " + m.getClassName() + "." + m.getMethodName());
+			//}
+			if(m.getClassName().equals("java.lang.System") && m.getMethodName().equals("currentTimeMillis")) {
+				TimeChangerAgent.log(m.where().getLongName() + ": " + m.getClassName() + "." + m.getMethodName());
+				// replace method calling java.lang.System.currentTimeMillis
+				m.replace("$_ = ga.d400x.timeoffset.util.TimeChangerUtil.offsetCurrentTimeMillis();");
+				isReplaced = true;
+			}
+			else if(m.getClassName().equals("jdk.internal.misc.VM") && m.getMethodName().equals("getNanoTimeAdjustment")) {
+				TimeChangerAgent.log(m.where().getLongName() + " " + m.getClassName() + "." + m.getMethodName());
+				// replace method calling jdk.internal.misc.VM.getNanoTimeAdjustment(long)
+				m.replace("$_ = ga.d400x.timeoffset.util.TimeChangerUtil.offsetGetNanoTimeAdjustment($$);");
+				isReplaced = true;
+			}
+		}
+	}
+
+}

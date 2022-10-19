@@ -1,0 +1,97 @@
+buildscript {
+	repositories {
+		mavenCentral()
+		jcenter()
+	}
+
+	dependencies {
+		classpath "org.anarres.jarjar:jarjar-gradle:1.0.1"
+	}
+
+	ext.versions = [
+		'asm': '9.4',
+		'javassist': '3.25+',
+	]
+}
+plugins {
+    id 'java-library'
+    id 'eclipse'
+}
+apply plugin: 'org.anarres.jarjar'
+
+sourceCompatibility=JavaVersion.VERSION_1_8
+targetCompatibility=JavaVersion.VERSION_1_8
+
+compileJava.options.encoding = "UTF-8"
+compileTestJava.options.encoding = "UTF-8"
+javadoc.options.encoding = 'UTF-8'
+
+version='0.9.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+	implementation "org.ow2.asm:asm:${versions.asm}"
+	//implementation "org.javassist:javassist:${versions.javassist}"
+
+	// (MEMO) uncomment this when need to relocate ASM *BEFORE* compile
+	//implementation jarjar.repackage("asm-9.4-renamed", {
+	//	from 'org.ow2.asm:asm:9.4'
+	//	classRename('org.objectweb.asm.**', 'ga.d400x.asm.@1')
+	//})
+}
+
+tasks.named('test') {
+    // Use JUnit Platform for unit tests.
+    useJUnitPlatform()
+}
+
+def jarManifest = [
+	'Premain-Class': 'ga.d400x.timechanger.agent.TimeChangerAgent',
+	'Can-Redefine-Classes': 'true',
+	'Can-Retransform-Classes': 'true',
+	'Can-Set-Native-Method-Prefix': 'true'
+]
+
+jar.manifest { attributes jarManifest }
+
+task fatJar(type: Jar) {
+	dependsOn jar
+	group 'build'
+	description "fat jar (with ASM ${versions.asm}, no transform)"
+	//exclude('ga/d400x/timechanger/sample/**')	//caused ClassNotFoundException on Java11/17, with bootclasspath/a and modules outside java.base
+	exclude('module-info.class')	// shipped with ASM
+	archiveAppendix.set 'fat'
+	manifest { attributes jarManifest }
+	with jar
+	//from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+	from { configurations.compileClasspath.findResult { it.isFile() && it.getName().matches('^asm-\\d+\\.\\d+\\.jar$') ? zipTree(it) : null } }
+}
+
+jarjar.repackage('nodepJar', {
+	dependsOn fatJar
+	group 'build'
+	description "nodep jar (with ASM ${versions.asm}, transformed)"
+	setDestinationDir fatJar.destinationDir
+	setDestinationName fatJar.archiveName.replace('-fat', '-nodep')
+	from(files(fatJar.archivePath))
+	classRename('org.objectweb.asm.**', 'ga.d400x.asm.@1')
+	//doLast {
+	//	delete file(fatJar.archiveFile.get())
+	//}
+})
+
+// create 'nodep' jar by 'build' task
+assemble.dependsOn 'nodepJar', 'jar'
+
+//task copyDependencies(type:Copy) {
+//	new File('libs').mkdirs()
+//	copy {
+//		from configurations.runtimeClasspath
+//		into 'libs'
+//	}
+//}
+
+
