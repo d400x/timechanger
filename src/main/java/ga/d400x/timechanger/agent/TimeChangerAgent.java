@@ -1,0 +1,123 @@
+package ga.d400x.timechanger.agent;
+
+import java.lang.instrument.Instrumentation;
+import java.util.HashSet;
+import java.util.Set;
+
+
+public class TimeChangerAgent {
+
+	static boolean isDoneBootstrapSearchAdd = false;
+
+	// commented out: logger.log initiates java.util.Date before transform
+	//static final Logger logger = Logger.getLogger(TimeMillisOffsetAgent.class.getCanonicalName());
+
+	public static final String PROP_OFFSET = TimeChangerAgent.class.getSimpleName() + ".OFFSETMILLIS";
+
+	public static final String PROP_PREMAIN = TimeChangerAgent.class.getSimpleName() + ".PREMAIN";
+
+	private static final String PROP_DEBUGLOG = "TIMECHANGER_DEBUG";
+
+	private static final String EXCLUDE_PREFIX = "exclude=";
+
+	/**
+	 * @param agentArgs "exclude=classpath,pkgpath/,path_starts_with*,..."
+	 * @param inst
+	 * @throws Exception
+	 */
+	public static void premain(String agentArgs, Instrumentation inst) throws Exception {
+		// Args
+		boolean isArgs = false;
+		if(agentArgs != null && agentArgs.startsWith(EXCLUDE_PREFIX) && EXCLUDE_PREFIX.length() < agentArgs.length()) {
+			for(String path: agentArgs.substring(EXCLUDE_PREFIX.length()).split(",")) {
+				path = path.replace('.', '/');
+				if(path.endsWith("/")) {
+					addSkipClassStartWith(path);
+					isArgs = true;
+				}
+				else if(path.endsWith("*")) {
+					int idx = path.length();
+					while(0 < idx && path.charAt(idx-1) == '*') {	// strip trailing '*'s without loading Regex
+						idx--;
+					}
+					if(0 <= idx) {
+						addSkipClassStartWith(path.substring(0, idx));
+						isArgs = true;
+					}
+				} else {
+					addSkipClass(path);
+					isArgs = true;
+				}
+			}
+		}
+
+		inst.addTransformer(new AsmTransformer());
+		TimeChangerAgent.log("added AsmTransformer");
+
+		// mark premain processed
+		System.setProperty(PROP_PREMAIN, "1");
+		log("property set: " + PROP_PREMAIN);
+
+		if(isArgs) {
+			log("skip=" + SKIP_CLASS + ", skipClassStartsWith=" + SKIP_CLASS_STARTSWITH);
+		}
+	}
+
+	// utility methods
+
+	private static boolean isDebugLog() {
+		return System.getProperty(PROP_DEBUGLOG) != null;
+	}
+
+	public static void log(String msg) {
+		if(isDebugLog()) {
+			System.err.println(msg);
+		}
+	}
+
+//	/**
+//	 * check class existence
+//	 * @param className
+//	 * @return class existence
+//	 */
+//	private static boolean isExistClass(String className) {
+//		try {
+//			Class.forName(className);
+//			return true;
+//		} catch(ClassNotFoundException e) {
+//			System.err.println(e.toString());
+//		}
+//		return false;
+//	}
+
+	private static final Set<String> SKIP_CLASS_STARTSWITH = new HashSet<>();
+	static {
+		String path = TimeChangerAgent.class.getPackage().getName().replace('.', '/') + '/';
+		SKIP_CLASS_STARTSWITH.add(path);
+		SKIP_CLASS_STARTSWITH.add(path.replace("/agent/", "/util/"));
+	}
+
+	public static synchronized boolean addSkipClassStartWith(String startWith) {
+		return SKIP_CLASS_STARTSWITH.add(startWith);
+	}
+
+	private static final Set<String> SKIP_CLASS = new HashSet<>();
+
+	public static synchronized boolean addSkipClass(String className) {
+		return SKIP_CLASS.add(className);
+	}
+
+	/**
+	 * @param className separated by '/' (eg. "java/util/Date")
+	 * @return boolean
+	 */
+	public static boolean isSkip(String className) {
+		return SKIP_CLASS.contains(className)
+				|| SKIP_CLASS_STARTSWITH.stream().filter(className::startsWith).findFirst().isPresent();
+	}
+
+	public static void dumpSkip() {
+		System.out.println("skipClass=" + SKIP_CLASS);
+		System.out.println("skipClassStartsWith=" + SKIP_CLASS_STARTSWITH);
+	}
+}
