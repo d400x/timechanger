@@ -1,8 +1,9 @@
 # timechanger
-A Java agent which changes time (such as new Date(), System.currentTimeMillis(), ...) of java process. 
+A Java agent which changes date/time (such as new Date(), System.currentTimeMillis(), ...) of java process.  
+Any change or recompile to your source codes is ***NOT*** needed.
 
-It intercepts System.currentTimeMillis() method calls and applies the offset to the return value.  
-So the objects and methods that use System.currentTimeMillis() as their time source (Such as new Date(), Calendar.getInstance() or LocalDateTime.now()) are also changed.
+This agent transforms classes to intercept System.currentTimeMillis() method calls and applies the offset to the return value.  
+So the classes that use System.currentTimeMillis() as their time source (like java.util.Date, java.util.Calendar or java.time. APIs) are also changed.
 
 ## How to Use
 1. Set desired offset millis by using system property `TimeChangerAgent.OFFSETMILLIS`  
@@ -12,10 +13,11 @@ So the objects and methods that use System.currentTimeMillis() as their time sou
 
 ### Example
 ```
-java -javaagent:/path/to/timechanger-nodep-x.x.x.jar -Xbootclasspath/a:/path/to/timechanger-nodep-x.x.x.jar \
--DTimeChangerAgent.OFFSETMILLIS=3600000 \
-$JAVA_OPTS \
-your_java_program
+java -javaagent:/path/to/timechanger-nodep-x.x.x.jar \
+ -Xbootclasspath/a:/path/to/timechanger-nodep-x.x.x.jar \
+ -DTimeChangerAgent.OFFSETMILLIS=3600000 \
+ your_java_opts \
+ your_java_program
 ```
 
 ## Other Options
@@ -48,4 +50,4 @@ TimeChangerUtil contains some utility methods:
 ## Limitations
 - Timechanger cannot change essential Java classes loaded by Bootstrap classloader before executing Java agents' premain.
 - Need Java1.8 or above
-
+- With gradle 7+, build will fail(https://github.com/shevek/jarjar/issues/22). Gradle 6.9.2 worked fine.
