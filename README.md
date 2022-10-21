@@ -39,7 +39,7 @@ your_java_program
 ```
 
 ## Utilities
-TimeChangerUtil contains some utility methods:
+[TimeChangerUtil](src/main/java/ga/d400x/timechanger/util/TimeChangerUtil.java) contains some utility methods:
 - setTo(Date)
 - setOffsetMillis(long)
 - clearOffsetMillis()
