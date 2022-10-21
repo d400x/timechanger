@@ -5,6 +5,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 
+/**
+ * Agent which intercepts System.currentTimeMillis() method calls and apply offset to their return value
+ * @see AsmTransformer
+ */
 public class TimeChangerAgent {
 
 	static boolean isDoneBootstrapSearchAdd = false;
@@ -26,40 +30,44 @@ public class TimeChangerAgent {
 	 * @throws Exception
 	 */
 	public static void premain(String agentArgs, Instrumentation inst) throws Exception {
-		// Args
-		boolean isArgs = false;
-		if(agentArgs != null && agentArgs.startsWith(EXCLUDE_PREFIX) && EXCLUDE_PREFIX.length() < agentArgs.length()) {
-			for(String path: agentArgs.substring(EXCLUDE_PREFIX.length()).split(",")) {
-				path = path.replace('.', '/');
-				if(path.endsWith("/")) {
-					addSkipClassStartWith(path);
-					isArgs = true;
-				}
-				else if(path.endsWith("*")) {
-					int idx = path.length();
-					while(0 < idx && path.charAt(idx-1) == '*') {	// strip trailing '*'s without loading Regex
-						idx--;
-					}
-					if(0 <= idx) {
-						addSkipClassStartWith(path.substring(0, idx));
+		try {
+			// Args
+			boolean isArgs = false;
+			if(agentArgs != null && agentArgs.startsWith(EXCLUDE_PREFIX) && EXCLUDE_PREFIX.length() < agentArgs.length()) {
+				for(String path: agentArgs.substring(EXCLUDE_PREFIX.length()).split(",")) {
+					path = path.replace('.', '/');
+					if(path.endsWith("/")) {
+						addSkipClassStartWith(path);
 						isArgs = true;
 					}
-				} else {
-					addSkipClass(path);
-					isArgs = true;
+					else if(path.endsWith("*")) {
+						int idx = path.length();
+						while(0 < idx && path.charAt(idx-1) == '*') {	// strip trailing '*'s without loading Regex
+							idx--;
+						}
+						if(0 <= idx) {
+							addSkipClassStartWith(path.substring(0, idx));
+							isArgs = true;
+						}
+					} else {
+						addSkipClass(path);
+						isArgs = true;
+					}
+				}
+				if(isArgs) {
+					log("skip=" + SKIP_CLASS + ", skipClassStartsWith=" + SKIP_CLASS_STARTSWITH);
 				}
 			}
-		}
 
-		inst.addTransformer(new AsmTransformer());
-		TimeChangerAgent.log("added AsmTransformer");
+			inst.addTransformer(new AsmTransformer());
+			TimeChangerAgent.log("added AsmTransformer");
 
-		// mark premain processed
-		System.setProperty(PROP_PREMAIN, "1");
-		log("property set: " + PROP_PREMAIN);
-
-		if(isArgs) {
-			log("skip=" + SKIP_CLASS + ", skipClassStartsWith=" + SKIP_CLASS_STARTSWITH);
+			// mark premain processed
+			System.setProperty(PROP_PREMAIN, "1");
+			log("property set: " + PROP_PREMAIN + ", classLoader=" + TimeChangerAgent.class.getClassLoader());
+		} catch(Exception e) {
+			e.printStackTrace(System.err);
+			throw e;
 		}
 	}
 
@@ -112,8 +120,8 @@ public class TimeChangerAgent {
 	 * @return boolean
 	 */
 	public static boolean isSkip(String className) {
-		return SKIP_CLASS.contains(className)
-				|| SKIP_CLASS_STARTSWITH.stream().filter(className::startsWith).findFirst().isPresent();
+		return className != null
+				&& (SKIP_CLASS.contains(className) || SKIP_CLASS_STARTSWITH.stream().filter(className::startsWith).findFirst().isPresent());
 	}
 
 	public static void dumpSkip() {

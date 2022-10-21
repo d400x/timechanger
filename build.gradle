@@ -26,7 +26,7 @@ compileJava.options.encoding = "UTF-8"
 compileTestJava.options.encoding = "UTF-8"
 javadoc.options.encoding = 'UTF-8'
 
-version='0.9.0'
+version='0.9.8'
 
 repositories {
     mavenCentral()
@@ -34,6 +34,8 @@ repositories {
 
 dependencies {
 	implementation "org.ow2.asm:asm:${versions.asm}"
+	implementation "org.ow2.asm:asm-util:${versions.asm}"
+	implementation "org.ow2.asm:asm-commons:${versions.asm}"
 	//implementation "org.javassist:javassist:${versions.javassist}"
 
 	// (MEMO) uncomment this when need to relocate ASM *BEFORE* compile
@@ -61,7 +63,8 @@ task fatJar(type: Jar) {
 	dependsOn jar
 	group 'build'
 	description "fat jar (with ASM ${versions.asm}, no transform)"
-	//exclude('ga/d400x/timechanger/sample/**')	//caused ClassNotFoundException on Java11/17, with bootclasspath/a and modules outside java.base
+	exclude('ga/d400x/timechanger/sample/**')	//caused ClassNotFoundException on Java11/17, with bootclasspath/a and modules outside java.base
+	exclude('ga/d400x/timechanger/asmtest/**')	//caused ClassNotFoundException on Java11/17, with bootclasspath/a and modules outside java.base
 	exclude('module-info.class')	// shipped with ASM
 	archiveAppendix.set 'fat'
 	manifest { attributes jarManifest }
