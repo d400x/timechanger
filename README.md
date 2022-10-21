@@ -6,18 +6,20 @@ This agent transforms classes to intercept System.currentTimeMillis() method cal
 So the classes that use System.currentTimeMillis() as their time source (like java.util.Date, java.util.Calendar or java.time. APIs) are also changed.
 
 ## How to Use
-1. Set desired offset millis by using system property `TimeChangerAgent.OFFSETMILLIS`  
-(eg. `-DTimeChangerAgent.OFFSETMILLIS=86400000` increases 1 day, `-DTimeChangerAgent.OFFSETMILLIS=-604800000` decreases 1 week)
-1. Run your java program with using timechanger as a java agent:  
-`-javaagent:/path/to/timechanger-nodep-x.x.x.jar -Xbootclasspath/a:/path/to/timechanger-nodep-x.x.x.jar`
+Add following command options to your java command:
+
+1. Desired offset millis by using system property `TimeChangerAgent.OFFSETMILLIS`  
+(eg. `-DTimeChangerAgent.OFFSETMILLIS=86400000` increases 1 day,  
+ `-DTimeChangerAgent.OFFSETMILLIS=-604800000` decreases 1 week)
+1. Set timechanger as a java agent:  
+`-javaagent:/path/to/timechanger-nodep-x.x.x.jar`
 
 ### Example
 ```
 java -javaagent:/path/to/timechanger-nodep-x.x.x.jar \
- -Xbootclasspath/a:/path/to/timechanger-nodep-x.x.x.jar \
- -DTimeChangerAgent.OFFSETMILLIS=3600000 \
- your_java_opts \
- your_java_program
+-DTimeChangerAgent.OFFSETMILLIS=3600000 \
+other_java_opts \
+your_java_program
 ```
 
 ## Other Options
@@ -31,9 +33,8 @@ java -javaagent:/path/to/timechanger-nodep-x.x.x.jar \
 ```
 java -DTIMECHANGER_DEBUG \
 -javaagent:/path/to/timechanger-nodep-x.x.x.jar=exclude=org.apache.logging.log4j.core.appender.rolling.* \
--Xbootclasspath/a:/path/to/timechanger-nodep-x.x.x.jar \
 -DTimeChangerAgent.OFFSETMILLIS=3600000 \
-$JAVA_OPTS \
+other_java_opts \
 your_java_program
 ```
 
