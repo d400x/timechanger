@@ -81,8 +81,8 @@ public class TimeChangerUtil {
 	}
 
 	/**
-	 * returns Offseted timeMillis<br>
-	 * Transformer replaces {@link System#currentTimeMillis()} call to this method
+	 * Offseted {@link System#currentTimeMillis()}<br>
+	 * <del>Transformer replaces {@link System#currentTimeMillis()} call to this method</del>
 	 * @return Offseted timeMillis
 	 * @see #getActualTimeMillis()
 	 * @see ga.d400x.timechanger.agent.TimeChangerAgent#premain
@@ -97,18 +97,19 @@ public class TimeChangerUtil {
 //	}
 
 	/**
-	 * Transformer replaces {@link jdk.internal.misc.VM#getNanoTimeAdjustment(long)} call to this method
+	 * Offseted {@link jdk.internal.misc.VM#getNanoTimeAdjustment(long)}<br>
+	 * <del>Transformer replaces {@link jdk.internal.misc.VM#getNanoTimeAdjustment(long)} call to this method</del>
 	 * @param offsetInSeconds
 	 * @return offseted {@link jdk.internal.misc.VM#getNanoTimeAdjustment(long)}
 	 * @see ga.d400x.timechanger.agent.TimeChangerAgent#premain
 	 * @see ga.d400x.timechanger.agent.AsmTransformer.CustomMethodVisitor#visitMethodInsn
 	 */
 	public static long offsetGetNanoTimeAdjustment(long offsetInSeconds) {
-		long adj = (offsetCurrentTimeMillis() - (offsetInSeconds * 1000L));
-		if((adj >>> 32) != 0L) {
+		long adjSec = (offsetCurrentTimeMillis() / 1000L) - offsetInSeconds;
+		if(adjSec != (long)((int)adjSec)) {
 			return -1L;
 		}
-		return adj * 1_000_000L;
+		return adjSec * 1_000_000_000L;
 	}
 
 }

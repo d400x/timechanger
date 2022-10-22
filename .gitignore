@@ -43,3 +43,6 @@ bin/
 # personal
 src/main/java/ga/d400x/timechanger/asmtest/
 
+# other
+.DS_Store
+
