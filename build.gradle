@@ -43,6 +43,9 @@ dependencies {
 	//	from 'org.ow2.asm:asm:9.4'
 	//	classRename('org.objectweb.asm.**', 'ga.d400x.asm.@1')
 	//})
+
+	// https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
 }
 
 tasks.named('test') {
