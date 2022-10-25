@@ -12,10 +12,19 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
+/**
+ * Transfomer that intercepts {@link java.lang.System#currentTimeMillis()} and applies offset.
+ * @author d400x
+ */
 public class AsmTransformer implements ClassFileTransformer {
 
 	static final int ASM_VER = ASM9;
 
+	/**
+	 * transforms date/time method calls by using ASM
+	 * @param className will be checked by {@link TimeChangerAgent#isSkip}
+	 * @param classfileBuffer class loaded and modified by ASM
+	 */
 	@Override
 	public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
 			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {

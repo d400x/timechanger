@@ -100,4 +100,7 @@ assemble.dependsOn 'nodepJar', 'jar'
 //	}
 //}
 
+javadoc {
+	excludes = [ "ga/d400x/timechanger/asmtest/*", "ga/d400x/timechanger/sample/*" ]
+}
 

@@ -4,6 +4,10 @@ import java.util.Date;
 
 import ga.d400x.timechanger.agent.TimeChangerAgent;
 
+/**
+ * Utility methods
+ * @author d400x
+ */
 public class TimeChangerUtil {
 
 	private TimeChangerUtil(){}
@@ -57,7 +61,7 @@ public class TimeChangerUtil {
 
 	/**
 	 * calculate and set offset so that changed time will be <i>target</i>
-	 * @param target
+	 * @param target target date that offset will be (offset = target - current)
 	 */
 	public static void setTo(Date target) {
 		checkPremain();
@@ -86,7 +90,7 @@ public class TimeChangerUtil {
 	 * @return Offseted timeMillis
 	 * @see #getActualTimeMillis()
 	 * @see ga.d400x.timechanger.agent.TimeChangerAgent#premain
-	 * @see ga.d400x.timechanger.agent.AsmTransformer.CustomMethodVisitor#visitMethodInsn
+	 * @see ga.d400x.timechanger.agent.AsmTransformer.TimeOffsetMethodAdapter#visitMethodInsn
 	 */
 	public static long offsetCurrentTimeMillis() {
 		return System.currentTimeMillis() + getOffsetMillis();
@@ -97,12 +101,13 @@ public class TimeChangerUtil {
 //	}
 
 	/**
-	 * Offseted {@link jdk.internal.misc.VM#getNanoTimeAdjustment(long)}<br>
-	 * <del>Transformer replaces {@link jdk.internal.misc.VM#getNanoTimeAdjustment(long)} call to this method</del>
-	 * @param offsetInSeconds
-	 * @return offseted {@link jdk.internal.misc.VM#getNanoTimeAdjustment(long)}
+	 * Offseted {@code jdk.internal.misc.VM#getNanoTimeAdjustment(long)} (JDK11+)<br>
+	 * <del>Transformer replaces {@code jdk.internal.misc.VM#getNanoTimeAdjustment(long)} call to this method</del>
+	 * @param offsetInSeconds base value (unixtime seconds)
+	 * @return offseted {@code jdk.internal.misc.VM#getNanoTimeAdjustment(long)} (or -1L if calculated value out of range) <br>
+	 * see more detailed info for a javadoc for jdk.internal.misc.VM
 	 * @see ga.d400x.timechanger.agent.TimeChangerAgent#premain
-	 * @see ga.d400x.timechanger.agent.AsmTransformer.CustomMethodVisitor#visitMethodInsn
+	 * @see ga.d400x.timechanger.agent.AsmTransformer.TimeOffsetMethodAdapter#visitMethodInsn
 	 */
 	public static long offsetGetNanoTimeAdjustment(long offsetInSeconds) {
 		long adjSec = (offsetCurrentTimeMillis() / 1000L) - offsetInSeconds;
