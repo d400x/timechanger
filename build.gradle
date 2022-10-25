@@ -1,7 +1,6 @@
 buildscript {
 	repositories {
 		mavenCentral()
-		jcenter()
 	}
 
 	dependencies {
@@ -103,4 +102,8 @@ assemble.dependsOn 'nodepJar', 'jar'
 javadoc {
 	excludes = [ "ga/d400x/timechanger/asmtest/*", "ga/d400x/timechanger/sample/*" ]
 }
+
+//tasks.withType(JavaCompile) {
+//	options.compilerArgs << '-Xlint:deprecation'
+//}
 

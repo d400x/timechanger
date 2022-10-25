@@ -52,7 +52,7 @@ public class AsmTransformerTest {
 		Class<?> clazz = loadClass(className, transformed);
 		System.out.println(clazz);
 		Method m = clazz.getMethod("getTimeMillis");
-		Object instance = clazz.newInstance();
+		Object instance = clazz.getDeclaredConstructor().newInstance();
 
 		Supplier<Long> offsetMillisSupplier = ()-> {
 			try {
