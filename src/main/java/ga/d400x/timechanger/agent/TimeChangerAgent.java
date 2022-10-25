@@ -16,20 +16,23 @@ public class TimeChangerAgent {
 	// commented out: logger.log initiates java.util.Date before transform
 	//static final Logger logger = Logger.getLogger(TimeMillisOffsetAgent.class.getCanonicalName());
 
+	/** System property key for offset millis */
 	public static final String PROP_OFFSET = TimeChangerAgent.class.getSimpleName() + ".OFFSETMILLIS";
 
+	/** System property key for timechanger javaagent applied or not */
 	public static final String PROP_PREMAIN = TimeChangerAgent.class.getSimpleName() + ".PREMAIN";
 
+	/** System property key for debug mode */
 	private static final String PROP_DEBUGLOG = "TIMECHANGER_DEBUG";
 
+	/** option string for exclude-option */
 	private static final String EXCLUDE_PREFIX = "exclude=";
 
 	/**
 	 * @param agentArgs "exclude=classpath,pkgpath/,path_starts_with*,..."
-	 * @param inst
-	 * @throws Exception
+	 * @param inst {@link Instrumentation}
 	 */
-	public static void premain(String agentArgs, Instrumentation inst) throws Exception {
+	public static void premain(String agentArgs, Instrumentation inst) {
 		try {
 			// Args
 			boolean isArgs = false;
@@ -77,6 +80,10 @@ public class TimeChangerAgent {
 		return System.getProperty(PROP_DEBUGLOG) != null;
 	}
 
+	/**
+	 * log to STDERR if {@link #PROP_DEBUGLOG} set
+	 * @param msg logging message
+	 */
 	public static void log(String msg) {
 		if(isDebugLog()) {
 			System.err.println(msg);
@@ -105,25 +112,39 @@ public class TimeChangerAgent {
 		SKIP_CLASS_STARTSWITH.add(path.replace("/agent/", "/util/"));
 	}
 
+	/**
+	 * Add exclude class pattern (start with)
+	 * @param startWith start-with-path separated by '/' (eg. "java/lang")
+	 * @return {@link Set#add(Object)}
+	 */
 	public static synchronized boolean addSkipClassStartWith(String startWith) {
 		return SKIP_CLASS_STARTSWITH.add(startWith);
 	}
 
 	private static final Set<String> SKIP_CLASS = new HashSet<>();
 
+	/**
+	 * Add exclude class
+	 * @param className class path separated by '/' (eg. "java/util/Date")
+	 * @return {@link Set#add(Object)}
+	 */
 	public static synchronized boolean addSkipClass(String className) {
 		return SKIP_CLASS.add(className);
 	}
 
 	/**
+	 * check className is transform skip target or not
 	 * @param className separated by '/' (eg. "java/util/Date")
-	 * @return boolean
+	 * @return true if className would not transform
 	 */
 	public static boolean isSkip(String className) {
 		return className != null
 				&& (SKIP_CLASS.contains(className) || SKIP_CLASS_STARTSWITH.stream().filter(className::startsWith).findFirst().isPresent());
 	}
 
+	/**
+	 * dumps skip target classes (to STDOUT)
+	 */
 	public static void dumpSkip() {
 		System.out.println("skipClass=" + SKIP_CLASS);
 		System.out.println("skipClassStartsWith=" + SKIP_CLASS_STARTSWITH);
